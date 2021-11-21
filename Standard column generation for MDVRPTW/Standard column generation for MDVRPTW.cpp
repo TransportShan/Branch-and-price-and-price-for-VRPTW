@@ -54,8 +54,8 @@ int _tmain(int argc, _TCHAR* argv[])
 	string data_file_name;					//输入参数文件
 	string iniSolution_file_name;			//输入初始解的文件
 	start = clock();
-	data_file_name = "./pr_data./mdvrptw02.csv";
-	iniSolution_file_name = "./pr_data./ini_mdvrptw02.csv"; 
+	data_file_name = "./pr_data./mdvrptw01.csv";
+	iniSolution_file_name = "./pr_data./ini_mdvrptw01.csv"; 
 
 	//声明类
 	Problem VRP;
