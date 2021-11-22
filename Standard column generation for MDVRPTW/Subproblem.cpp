@@ -975,7 +975,7 @@ void Subproblem::Initial_lables(BranchABound & BB, RMP & lp, Problem & p, SRC & 
 			//判断节点temp_customer是否在第j个Cuts_src的subset中
 			if (1==Cuts_src.SRC_subset_indicator[j][temp_customer])
 			{
-				BackwardPath_container[temp_back_posi].state_src[j] = Cuts_src.add_state(j);
+				BackwardPath_container[temp_back_posi].state_src[j] = Cuts_src.add_state(Cuts_src.SRC_subset_len[j]);
 			}
 		}
 #endif
@@ -1080,7 +1080,7 @@ void Subproblem::Initial_lables(BranchABound & BB, RMP & lp, Problem & p, SRC & 
 			//判断节点temp_customer是否在第j个Cuts_src的subset中
 			if (1 == Cuts_src.SRC_subset_indicator[j][temp_customer])
 			{
-				ForwardPath_container[temp_for_posi].state_src[j] = Cuts_src.add_state(j);
+				ForwardPath_container[temp_for_posi].state_src[j] = Cuts_src.add_state(Cuts_src.SRC_subset_len[j]);
 			}
 		}
 #endif
@@ -2273,7 +2273,7 @@ bool Subproblem::Extend_Onestep(int direction, int currentCus, Path & curlabel, 
 			//第二，判断nextCus是否在Cuts_src.SRC_subset_indicator[i]中
 			if (1== Cuts_src.SRC_subset_indicator[i][nextCus])
 			{
-				nextlabel.state_src[i] = nextlabel.state_src[i] + Cuts_src.add_state(i);
+				nextlabel.state_src[i] = nextlabel.state_src[i] + Cuts_src.add_state(Cuts_src.SRC_subset_len[i]);
 				if (nextlabel.state_src[i]>=1)
 				{
 					SRC_modifiedRC = -lp.SRC_dual[i];
@@ -2427,7 +2427,7 @@ bool Subproblem::Extend_Onestep(int direction, int currentCus, Path & curlabel, 
 			//第二，判断nextCus是否在Cuts_src.SRC_subset_indicator[i]中
 			if (1== Cuts_src.SRC_subset_indicator[i][nextCus])
 			{
-				nextlabel.state_src[i] = nextlabel.state_src[i] + Cuts_src.add_state(i);
+				nextlabel.state_src[i] = nextlabel.state_src[i] + Cuts_src.add_state(Cuts_src.SRC_subset_len[i]);
 				if (nextlabel.state_src[i]>=1)
 				{
 					SRC_modifiedRC = -lp.SRC_dual[i];

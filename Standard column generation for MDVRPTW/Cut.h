@@ -96,9 +96,11 @@ public:
 	virtual ~SRC();
 
 	void Ini_SRC(Problem &p);																							//初始化SRC
-	float add_state(int SRC_no);																						//根据第no个SRC的集合C的大小，确定每次state递增的数量
+	float add_state(int SRC_length);																					//根据第SRC的集合C的大小，确定每次state递增的数量
+	int Get_RHS(int SRC_length);																						//根据第SRC的集合C的大小，返回SRC右侧系数
 	int Get_insert_no(float cur_violation);																				//获取violation中的插入位置
 	void Insert_VioandRoute(int posi,float cur_violation);																//将cur_violation和temp_2D分别插入violation和subset_route的第posi个位置
+	bool Check_SameSubset(int S1, int S2);																				//如果SRC_subset[S1]与SRC_subset[S1]相同则返回true，否则返回false
 public:
 	//记录已经生成的SRC
 	int **SRC_subset;						//记录每个SRC有效不等式中节点集合C，大小为[Conf::MAX_SR_NUM]*[Conf::MAX_SR_SET]
@@ -106,7 +108,10 @@ public:
 	int *SRC_RHS;							//记录每个SRC有效不等式的右侧常数，大小为[Conf::MAX_SR_NUM]
 	int **SRC_subset_indicator;				//如果一个SRC_subset包含该客户上则为1，否则为0，大小为[Conf::MAX_SR_NUM]*[p.Depot_num+p.Customer_Num]
 
+	int **SRC_LimitVertexSet;				//记录每个SRC有效不等式中limit_memory中节点的集合，大小为[Conf::MAX_SR_NUM]*[p.Customer_Num]
+	int *SRC_LimitVertexSet_num;			//记录每个SRC有效不等式中limit_memory中节点的数量，大小为[Conf::MAX_SR_NUM]
 	int **SRC_LimitVertexSet_indicator;		//记录每个SRC有效不等式中limit_memory中节点的集合，如果包含该点则为1，否则为0，大小为[Conf::MAX_SR_NUM]*[p.Depot_num+p.Customer_Num]
+
 	int ***SRC_LimitArcSet_indicator;		//记录每个SRC有效不等式中limit_memory中弧的集合，如果经过该弧则为1，否则为0，大小为[Conf::MAX_SR_NUM]*[p.Depot_num+p.Customer_Num]*[p.Depot_num+p.Customer_Num]
 
 	int processed_num;						//SRC_subset中已经在主问题写成约束的数量
@@ -114,11 +119,9 @@ public:
 	//记录每个SRC对应CPLEX环境中Rmp_ctall的序号
 	int *SRC_cons_index;					//每个SRC对应的SRC_subset在Rmp_ctall中的序号，大小为[Conf::MAX_SR_NUM]
 	//辅助separation algorithm的变量
-	
-	//初始化
 	vector<float> violation;				//分离过程中记录前Conf::MAX_ADD_SR个违反约束程度最大的SRC的惩罚值，大小为[Conf::MAX_ADD_SR+1]
 	vector<vector<int>> subset_route;		//分离过程中记录前Conf::MAX_ADD_SR个违反约束程度最大的SRC的subset和哪些路径，大小为[Conf::MAX_ADD_SR+1]*[Conf::MAX_SR_SET+100]
-											//第0列为subset个数，第1-Conf::MAX_SR_SET列为subset的节点序号
+											//第0列为subset个数;第1-Conf::MAX_SR_SET列为subset的节点序号;第Conf::MAX_SR_SET+1列为该集合C所在路径的个数;第Conf::MAX_SR_SET+2-Conf::MAX_SR_SET+99为基解中路径的序号
 	vector<int> temp_2D;					//向subset_route插入一行的过程中，临时存储，这里开辟是为了减少函数中反复动态开辟，大小为[Conf::MAX_SR_SET+100]
 	int violation_num;						//分离过程中，找到的SRC数量
 };

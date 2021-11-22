@@ -22,6 +22,9 @@
 									//0：不删除
 									//1：删除
 #define SRCUT 1						//0: 不考虑subset row-cut, 1: 考虑
+#define LIMITTPYE 1					//SRCUT=1时的memory策略：
+									//0：vertex-memory
+									//1：arc-memory:除了路径上的弧，额外包括从M到C和从C到M
 #define KPATHCUT 0					//0: 不考虑kpath-cut, 1: 考虑
 #define RCCUT 0						//0: 不考虑rounded capacaity-cut, 1: 考虑
 #define NGINI 1						//在PSP中初始化ngset策略

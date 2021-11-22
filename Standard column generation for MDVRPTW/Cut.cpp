@@ -312,6 +312,8 @@ void SRC::Ini_SRC(Problem & p)
 	SRC_RHS = new int[Conf::MAX_SR_NUM];
 	SRC_subset_indicator = new int*[Conf::MAX_SR_NUM];
 	SRC_cons_index = new int[Conf::MAX_SR_NUM];
+	SRC_LimitVertexSet= new int*[Conf::MAX_SR_NUM];
+	SRC_LimitVertexSet_num= new int[Conf::MAX_SR_NUM];
 	SRC_LimitVertexSet_indicator = new int*[Conf::MAX_SR_NUM];
 	SRC_LimitArcSet_indicator = new int**[Conf::MAX_SR_NUM];
 
@@ -330,6 +332,8 @@ void SRC::Ini_SRC(Problem & p)
 			SRC_subset_indicator[i][j] = 0;
 		}
 		SRC_cons_index[i] = -1;
+		SRC_LimitVertexSet[i] = new int[p.Customer_Num];
+		SRC_LimitVertexSet_num[i] = 0;
 		SRC_LimitVertexSet_indicator[i] = new int[p.Customer_Num + p.Depot_Num];
 		SRC_LimitArcSet_indicator[i] = new int*[p.Customer_Num + p.Depot_Num];
 		for (int j = 0; j < p.Customer_Num + p.Depot_Num; j++)
@@ -355,19 +359,40 @@ void SRC::Ini_SRC(Problem & p)
 	}
 }
 
-float SRC::add_state(int SRC_no)
+float SRC::add_state(int SRC_length)
 {
-	if (3 == SRC_subset_len[SRC_no])
+	if (3 == SRC_length)
 	{
 		return Conf::SR_MULTIPY_3;
 	}
-	else if (4 == SRC_subset_len[SRC_no])
+	else if (4 == SRC_length)
 	{
 		return Conf::SR_MULTIPY_4;
 	}
-	else if (5 == SRC_subset_len[SRC_no])
+	else if (5 == SRC_length)
 	{
 		return Conf::SR_MULTIPY_5;
+	}
+	else
+	{
+		cout << "ERROR£ºSRC²»µÈÊ½´íÎó" << endl;
+		cin.get();
+	}
+}
+
+int SRC::Get_RHS(int SRC_length)
+{
+	if (3 == SRC_length)
+	{
+		return floor(3 * Conf::SR_MULTIPY_3);
+	}
+	else if (4 == SRC_length)
+	{
+		return floor(4 * Conf::SR_MULTIPY_4);
+	}
+	else if (5 == SRC_length)
+	{
+		return floor(5 * Conf::SR_MULTIPY_5);
 	}
 	else
 	{
@@ -408,4 +433,24 @@ void SRC::Insert_VioandRoute(int posi, float cur_violation)
 	{
 		violation_num = violation_num + 1;
 	}
+}
+
+bool SRC::Check_SameSubset(int S1, int S2)
+{
+	if (SRC_subset_len[S1] == SRC_subset_len[S2])
+	{
+		return false;
+	}
+	else
+	{
+		for (int i = 0; i < SRC_subset_len[S1]; i++)
+		{
+			if (SRC_subset_indicator[S1][SRC_subset[S1][i]]!= SRC_subset_indicator[S2][SRC_subset[S1][i]])
+			{
+				return false;
+			}
+		}
+	}
+
+	return true;
 }

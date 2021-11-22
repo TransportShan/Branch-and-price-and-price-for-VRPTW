@@ -1468,50 +1468,325 @@ bool Column_Generation::Generate_SRC(SolINFOR & SolInfo, BranchABound & BB, Subp
 	int temp_visit_num = 0;
 	int temp_RHS = 0;
 	int insert_posi = 0;
-	//|C|=3时
-	temp_RHS = floor(Conf::SR_MULTIPY_3*3);
-	//遍历所有三元组,注意是组合，而不是排列
-	for (int i = 0; i < p.Customer_Num; i++)
-	{
-		for (int j = i+1; j < p.Customer_Num; j++)
-		{
-			for (int k = j+1; k < p.Customer_Num; k++)
-			{
-				//检验当前基解
-				//得到系数
-				for (int s=0; s < SolInfo.Cur_solution.best_LBsol_num; s++)
-				{
-					temp_visit_num = colp.Col[SolInfo.Cur_solution.best_LBsol_index[s]].Customer_indicator[i] + colp.Col[SolInfo.Cur_solution.best_LBsol_index[s]].Customer_indicator[j] + colp.Col[SolInfo.Cur_solution.best_LBsol_index[s]].Customer_indicator[k];
-					if (Conf::SR_MULTIPY_3*temp_visit_num >= 1)
-					{
-						temp_vio = temp_vio + SolInfo.Cur_solution.best_LBsol_value[s] * floor(Conf::SR_MULTIPY_3*temp_visit_num);
-					}
-				}
-				temp_vio = temp_vio - temp_RHS;
-				//违反程度需要>=Conf::MIN_SR_THRESHOLD
-				if (temp_vio >= Conf::MIN_SR_THRESHOLD)
-				{
-					//在violation和subset_route中排序
-					//先找到violation插入位置
-					insert_posi = Cuts_src.Get_insert_no(temp_vio);
-					//如果insert_posi为-1则排不上号
-					if (insert_posi>=0)
-					{
-						//先生成temp_2D
-						Cuts_src.temp_2D[0] = i;
-						Cuts_src.temp_2D[1] = j;
-						Cuts_src.temp_2D[2] = k;
 
-						//再插入
-						Cuts_src.Insert_VioandRoute(insert_posi, temp_vio);
+	//|C|=3时
+	if (Conf::MAX_SR_SET>=3)
+	{
+		temp_RHS = floor(Conf::SR_MULTIPY_3 * 3);
+		//遍历所有三元组,注意是组合，而不是排列
+		for (int i = 0; i < p.Customer_Num; i++)
+		{
+			for (int j = i + 1; j < p.Customer_Num; j++)
+			{
+				for (int k = j + 1; k < p.Customer_Num; k++)
+				{
+					//检验当前基解
+					//得到系数
+					Cuts_src.temp_2D[Conf::MAX_SR_SET + 1] = 0;
+					for (int s = 0; s < SolInfo.Cur_solution.best_LBsol_num; s++)
+					{
+						temp_visit_num = colp.Col[SolInfo.Cur_solution.best_LBsol_index[s]].Customer_indicator[i] + colp.Col[SolInfo.Cur_solution.best_LBsol_index[s]].Customer_indicator[j] + colp.Col[SolInfo.Cur_solution.best_LBsol_index[s]].Customer_indicator[k];
+						if (Conf::SR_MULTIPY_3*temp_visit_num >= 1)
+						{
+							Cuts_src.temp_2D[Conf::MAX_SR_SET + 1]++;
+							Cuts_src.temp_2D[Conf::MAX_SR_SET + 1 + Cuts_src.temp_2D[Conf::MAX_SR_SET + 1]] = SolInfo.Cur_solution.best_LBsol_index[s];
+							temp_vio = temp_vio + SolInfo.Cur_solution.best_LBsol_value[s] * floor(Conf::SR_MULTIPY_3*temp_visit_num);
+						}
+					}
+					temp_vio = temp_vio - temp_RHS;
+					//违反程度需要>=Conf::MIN_SR_THRESHOLD
+					if (temp_vio >= Conf::MIN_SR_THRESHOLD)
+					{
+						//在violation和subset_route中排序
+						//先找到violation插入位置
+						insert_posi = Cuts_src.Get_insert_no(temp_vio);
+						//如果insert_posi为-1则排不上号
+						if (insert_posi >= 0)
+						{
+							//先生成temp_2D
+							Cuts_src.temp_2D[0] = 3;
+
+							Cuts_src.temp_2D[1] = i;
+							Cuts_src.temp_2D[2] = j;
+							Cuts_src.temp_2D[3] = k;
+							//再插入
+							Cuts_src.Insert_VioandRoute(insert_posi, temp_vio);
+						}
 					}
 				}
 			}
 		}
 	}
+
 	//|C|=4时
+	if (Conf::MAX_SR_SET >= 4)
+	{
+		temp_RHS = floor(Conf::SR_MULTIPY_4 * 4);
+		//遍历所有四元组,但是限制C中任意两点距离不大于MAX_SR_DISTANCE
+		for (int n_1 = 0; n_1 < p.Customer_Num; n_1++)
+		{
+			for (int n_2 = n_1 + 1; n_2 < p.Customer_Num; n_2++)
+			{
+				if (p.Cost_network[n_1][n_2]>Conf::MAX_SR_DISTANCE)continue;
+				for (int n_3 = n_2 + 1; n_3 < p.Customer_Num; n_3++)
+				{
+					if (p.Cost_network[n_1][n_3]>Conf::MAX_SR_DISTANCE)continue;
+					if (p.Cost_network[n_2][n_3]>Conf::MAX_SR_DISTANCE)continue;
+					for (int n_4 = n_3 + 1; n_4 < p.Customer_Num; n_4++)
+					{
+						if (p.Cost_network[n_1][n_4]>Conf::MAX_SR_DISTANCE)continue;
+						if (p.Cost_network[n_2][n_4]>Conf::MAX_SR_DISTANCE)continue;
+						if (p.Cost_network[n_3][n_4]>Conf::MAX_SR_DISTANCE)continue;
+						//以上都是限制|C|=4时，C中任意两点距离不大于MAX_SR_DISTANCE
+						//检验当前基解
+						//得到系数
+						Cuts_src.temp_2D[Conf::MAX_SR_SET + 1] = 0;
+						for (int s = 0; s < SolInfo.Cur_solution.best_LBsol_num; s++)
+						{
+							temp_visit_num = colp.Col[SolInfo.Cur_solution.best_LBsol_index[s]].Customer_indicator[n_1] + colp.Col[SolInfo.Cur_solution.best_LBsol_index[s]].Customer_indicator[n_2]
+								+ colp.Col[SolInfo.Cur_solution.best_LBsol_index[s]].Customer_indicator[n_3] + colp.Col[SolInfo.Cur_solution.best_LBsol_index[s]].Customer_indicator[n_4];
+							if (Conf::SR_MULTIPY_4*temp_visit_num >= 1)
+							{
+								Cuts_src.temp_2D[Conf::MAX_SR_SET + 1]++;
+								Cuts_src.temp_2D[Conf::MAX_SR_SET + 1 + Cuts_src.temp_2D[Conf::MAX_SR_SET + 1]] = SolInfo.Cur_solution.best_LBsol_index[s];
+								temp_vio = temp_vio + SolInfo.Cur_solution.best_LBsol_value[s] * floor(Conf::SR_MULTIPY_4*temp_visit_num);
+							}
+						}
+						temp_vio = temp_vio - temp_RHS;
+						//违反程度需要>=Conf::MIN_SR_THRESHOLD
+						if (temp_vio >= Conf::MIN_SR_THRESHOLD)
+						{
+							//在violation和subset_route中排序
+							//先找到violation插入位置
+							insert_posi = Cuts_src.Get_insert_no(temp_vio);
+							//如果insert_posi为-1则排不上号
+							if (insert_posi >= 0)
+							{
+								//先生成temp_2D
+								Cuts_src.temp_2D[0] = 4;
+
+								Cuts_src.temp_2D[1] = n_1;
+								Cuts_src.temp_2D[2] = n_2;
+								Cuts_src.temp_2D[3] = n_3;
+								Cuts_src.temp_2D[4] = n_4;
+								//再插入
+								Cuts_src.Insert_VioandRoute(insert_posi, temp_vio);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 
 	//|C|=5时
+	if (Conf::MAX_SR_SET >= 5)
+	{
+		temp_RHS = floor(Conf::SR_MULTIPY_5 * 5);
+		//遍历所有五元组,但是限制C中任意两点距离不大于MAX_SR_DISTANCE
+		for (int n_1 = 0; n_1 < p.Customer_Num; n_1++)
+		{
+			for (int n_2 = n_1 + 1; n_2 < p.Customer_Num; n_2++)
+			{
+				if (p.Cost_network[n_1][n_2]>Conf::MAX_SR_DISTANCE)continue;
+				for (int n_3 = n_2 + 1; n_3 < p.Customer_Num; n_3++)
+				{
+					if (p.Cost_network[n_1][n_3]>Conf::MAX_SR_DISTANCE)continue;
+					if (p.Cost_network[n_2][n_3]>Conf::MAX_SR_DISTANCE)continue;
+					for (int n_4 = n_3 + 1; n_4 < p.Customer_Num; n_4++)
+					{
+						if (p.Cost_network[n_1][n_4]>Conf::MAX_SR_DISTANCE)continue;
+						if (p.Cost_network[n_2][n_4]>Conf::MAX_SR_DISTANCE)continue;
+						if (p.Cost_network[n_3][n_4]>Conf::MAX_SR_DISTANCE)continue;
+						for (int n_5 = n_4 + 1; n_5 < p.Customer_Num; n_5++)
+						{
+							if (p.Cost_network[n_1][n_5]>Conf::MAX_SR_DISTANCE)continue;
+							if (p.Cost_network[n_2][n_5]>Conf::MAX_SR_DISTANCE)continue;
+							if (p.Cost_network[n_3][n_5]>Conf::MAX_SR_DISTANCE)continue;
+							if (p.Cost_network[n_4][n_5]>Conf::MAX_SR_DISTANCE)continue;
+							//以上都是限制|C|=5时，C中任意两点距离不大于MAX_SR_DISTANCE
+							//检验当前基解
+							//得到系数
+							Cuts_src.temp_2D[Conf::MAX_SR_SET + 1] = 0;
+							for (int s = 0; s < SolInfo.Cur_solution.best_LBsol_num; s++)
+							{
+								temp_visit_num = colp.Col[SolInfo.Cur_solution.best_LBsol_index[s]].Customer_indicator[n_1] + colp.Col[SolInfo.Cur_solution.best_LBsol_index[s]].Customer_indicator[n_2]
+									+ colp.Col[SolInfo.Cur_solution.best_LBsol_index[s]].Customer_indicator[n_3] + colp.Col[SolInfo.Cur_solution.best_LBsol_index[s]].Customer_indicator[n_4];
+								if (Conf::SR_MULTIPY_5*temp_visit_num >= 1)
+								{
+									Cuts_src.temp_2D[Conf::MAX_SR_SET + 1]++;
+									Cuts_src.temp_2D[Conf::MAX_SR_SET + 1 + Cuts_src.temp_2D[Conf::MAX_SR_SET + 1]] = SolInfo.Cur_solution.best_LBsol_index[s];
+									temp_vio = temp_vio + SolInfo.Cur_solution.best_LBsol_value[s] * floor(Conf::SR_MULTIPY_5*temp_visit_num);
+								}
+							}
+							temp_vio = temp_vio - temp_RHS;
+							//违反程度需要>=Conf::MIN_SR_THRESHOLD
+							if (temp_vio >= Conf::MIN_SR_THRESHOLD)
+							{
+								//在violation和subset_route中排序
+								//先找到violation插入位置
+								insert_posi = Cuts_src.Get_insert_no(temp_vio);
+								//如果insert_posi为-1则排不上号
+								if (insert_posi >= 0)
+								{
+									//先生成temp_2D
+									Cuts_src.temp_2D[0] = 5;
+
+									Cuts_src.temp_2D[1] = n_1;
+									Cuts_src.temp_2D[2] = n_2;
+									Cuts_src.temp_2D[3] = n_3;
+									Cuts_src.temp_2D[4] = n_4;
+									Cuts_src.temp_2D[5] = n_5;
+									//再插入
+									Cuts_src.Insert_VioandRoute(insert_posi, temp_vio);
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	if (Conf::MAX_SR_SET >= 6)
+	{
+		//有问题
+		cout << "ERROR: 还没有编呢" << endl;
+		cin.get();
+	}
+
+	//根据排序结果选择前Cuts_src.violation_num个subset-row进入RMP
+	//首先，生成前Cuts_src.violation_num个SRC的SRC_LimitVertexSet_indicator和SRC_LimitArcSet_indicator
+	//然后，检验是否存在需要合并的SRC_LimitVertexSet_indicator
+	int *augment_Vertex;
+	int augment_Vertex_num = 0;
+	augment_Vertex = new int[p.Customer_Num];
+	float temp_state = 0;
+
+	for (int i = 0; i < Cuts_src.violation_num; i++)
+	{
+		//先生成SRC_LimitVertexSet_indicator
+		//SRC_subset_indicator
+		Cuts_src.SRC_RHS[Cuts_src.processed_num + Cuts_src.added_num] = Cuts_src.Get_RHS(Cuts_src.subset_route[i][0]);
+		Cuts_src.SRC_subset_len[Cuts_src.processed_num + Cuts_src.added_num] = Cuts_src.subset_route[i][0];
+		Cuts_src.SRC_LimitVertexSet_num[Cuts_src.processed_num + Cuts_src.added_num] = Cuts_src.subset_route[i][0];
+		for (int s = 0; s < p.Depot_Num+p.Customer_Num; s++)
+		{
+			Cuts_src.SRC_subset_indicator[Cuts_src.processed_num+ Cuts_src.added_num][s] = 0;
+			Cuts_src.SRC_LimitVertexSet_indicator[Cuts_src.processed_num + Cuts_src.added_num][s] = 0;
+		}
+		for (int s = 0; s < Cuts_src.subset_route[i][0]; s++)
+		{
+			Cuts_src.SRC_subset[Cuts_src.processed_num + Cuts_src.added_num][s] = Cuts_src.subset_route[i][1 + s];
+			Cuts_src.SRC_subset_indicator[Cuts_src.processed_num + Cuts_src.added_num][Cuts_src.subset_route[i][1+s]] = 1;
+			//SRC_LimitVertexSet_indicator
+			Cuts_src.SRC_LimitVertexSet[Cuts_src.processed_num + Cuts_src.added_num][s] = Cuts_src.subset_route[i][1 + s];
+			Cuts_src.SRC_LimitVertexSet_indicator[Cuts_src.processed_num + Cuts_src.added_num][Cuts_src.subset_route[i][1 + s]] = 1;
+		}
+		for (int j = 0; j < Cuts_src.subset_route[i][Conf::MAX_SR_SET + 1]; j++)
+		{
+			temp_state = 0;
+			augment_Vertex_num = 0;
+			for (int k = 0; k <colp.Col[Cuts_src.subset_route[i][Conf::MAX_SR_SET + 2 + j]].nodesNum ; k++)
+			{
+				if (1==Cuts_src.SRC_subset_indicator[Cuts_src.processed_num + Cuts_src.added_num][colp.Col[Cuts_src.subset_route[i][Conf::MAX_SR_SET + 2 + j]].nodes[k]])
+				{
+					temp_state = temp_state + Cuts_src.add_state(Cuts_src.subset_route[i][0]);
+					if (temp_state >= 1)
+					{
+						for (int m = 0; m < augment_Vertex_num; m++)
+						{
+							Cuts_src.SRC_LimitVertexSet[Cuts_src.processed_num + Cuts_src.added_num][Cuts_src.SRC_LimitVertexSet_num[Cuts_src.processed_num + Cuts_src.added_num]] = augment_Vertex[m];
+							Cuts_src.SRC_LimitVertexSet_indicator[Cuts_src.processed_num + Cuts_src.added_num][augment_Vertex[m]] = 1;
+							Cuts_src.SRC_LimitVertexSet_num[Cuts_src.processed_num + Cuts_src.added_num]++;
+						}
+						augment_Vertex_num = 0;
+						temp_state = temp_state - 1;
+					}
+				}
+				else if (temp_state>MINDOUBLE)
+				{
+					augment_Vertex[augment_Vertex_num] = colp.Col[Cuts_src.subset_route[i][Conf::MAX_SR_SET + 2 + j]].nodes[k];
+					augment_Vertex_num++;
+				}
+			}
+		}
+		//再生成SRC_LimitArcSet_indicator
+		for (int j = 0; j < p.Depot_Num + p.Customer_Num; j++)
+		{	
+			for (int k = 0; k < p.Depot_Num + p.Customer_Num; k++)
+			{
+				Cuts_src.SRC_LimitArcSet_indicator[Cuts_src.processed_num + Cuts_src.added_num][j][k] = 0;
+			}
+		}
+#if LIMITTPYE == 0
+		//vertex-memory
+		//即从M到M
+		for(int j = 0; j < Cuts_src.SRC_LimitVertexSet_num[Cuts_src.processed_num + Cuts_src.added_num]; j++)
+		{
+			for (int k = j+1; k < Cuts_src.SRC_LimitVertexSet_num[Cuts_src.processed_num + Cuts_src.added_num]; k++)
+			{
+				Cuts_src.SRC_LimitArcSet_indicator[Cuts_src.processed_num + Cuts_src.added_num][Cuts_src.SRC_LimitVertexSet[Cuts_src.processed_num + Cuts_src.added_num][j]][Cuts_src.SRC_LimitVertexSet[Cuts_src.processed_num + Cuts_src.added_num][k]] = 1;
+				Cuts_src.SRC_LimitArcSet_indicator[Cuts_src.processed_num + Cuts_src.added_num][Cuts_src.SRC_LimitVertexSet[Cuts_src.processed_num + Cuts_src.added_num][k]][Cuts_src.SRC_LimitVertexSet[Cuts_src.processed_num + Cuts_src.added_num][j]] = 1;
+			}
+		}
+#else
+		//arc-memory
+		//除了路径上的弧，额外包括从M到C和从C到M
+		//每条路径上的弧
+		for (int j = 0; j < Cuts_src.subset_route[i][Conf::MAX_SR_SET + 1]; j++)
+		{
+			for (int k = 0; k < colp.Col[Cuts_src.subset_route[i][Conf::MAX_SR_SET + 2 + j]].nodesNum-1; k++)
+			{
+				if (1== Cuts_src.SRC_LimitVertexSet_indicator[Cuts_src.processed_num + Cuts_src.added_num][colp.Col[Cuts_src.subset_route[i][Conf::MAX_SR_SET + 2 + j]].nodes[k]]
+					&& 1 == Cuts_src.SRC_LimitVertexSet_indicator[Cuts_src.processed_num + Cuts_src.added_num][colp.Col[Cuts_src.subset_route[i][Conf::MAX_SR_SET + 2 + j]].nodes[k+1]])
+				{
+					Cuts_src.SRC_LimitArcSet_indicator[Cuts_src.processed_num + Cuts_src.added_num][colp.Col[Cuts_src.subset_route[i][Conf::MAX_SR_SET + 2 + j]].nodes[k]][colp.Col[Cuts_src.subset_route[i][Conf::MAX_SR_SET + 2 + j]].nodes[k+1]] = 1;
+				}
+			}
+		}
+		//从M到C和从C到M
+		for (int j = 0; j < Cuts_src.SRC_LimitVertexSet_num[Cuts_src.processed_num + Cuts_src.added_num]; j++)
+		{
+			for (int k = 0; k < Cuts_src.SRC_subset_len[Cuts_src.processed_num + Cuts_src.added_num]; k++)
+			{
+				if (Cuts_src.SRC_LimitVertexSet[Cuts_src.processed_num + Cuts_src.added_num][j]== Cuts_src.SRC_subset[Cuts_src.processed_num + Cuts_src.added_num][k])continue;
+				Cuts_src.SRC_LimitArcSet_indicator[Cuts_src.processed_num + Cuts_src.added_num][Cuts_src.SRC_LimitVertexSet[Cuts_src.processed_num + Cuts_src.added_num][j]][Cuts_src.SRC_subset[Cuts_src.processed_num + Cuts_src.added_num][k]] = 1;
+				Cuts_src.SRC_LimitArcSet_indicator[Cuts_src.processed_num + Cuts_src.added_num][Cuts_src.SRC_LimitVertexSet[Cuts_src.processed_num + Cuts_src.added_num][k]][Cuts_src.SRC_subset[Cuts_src.processed_num + Cuts_src.added_num][j]] = 1;
+			}
+		}
+#endif
+		//检验检验是否存在需要合并的SRC_LimitVertexSet_indicator和SRC_LimitVertexSet_indicator
+		for (int j = 0; j < Cuts_src.processed_num; j++)
+		{
+			//检验Cuts_src.SRC_subset[j]是否与Cuts_src.SRC_subset[Cuts_src.processed_num + Cuts_src.added_num]完全相同
+			if (true== Cuts_src.Check_SameSubset(j, Cuts_src.processed_num + Cuts_src.added_num))
+			{
+				//合并Cuts_src.SRC_LimitVertexSet[Cuts_src.processed_num + Cuts_src.added_num]到Cuts_src.SRC_LimitVertexSet[j]
+				for (int k = 0; k < Cuts_src.SRC_LimitVertexSet_num[Cuts_src.processed_num + Cuts_src.added_num]; k++)
+				{
+					if (0==Cuts_src.SRC_LimitVertexSet_indicator[j][Cuts_src.SRC_LimitVertexSet[Cuts_src.processed_num + Cuts_src.added_num][k]])
+					{
+						Cuts_src.SRC_LimitVertexSet[j][Cuts_src.SRC_LimitVertexSet_num[j]] = Cuts_src.SRC_LimitVertexSet[Cuts_src.processed_num + Cuts_src.added_num][k];
+						Cuts_src.SRC_LimitVertexSet_num[j]++;
+						Cuts_src.SRC_LimitVertexSet_indicator[j][Cuts_src.SRC_LimitVertexSet[Cuts_src.processed_num + Cuts_src.added_num][k]] = 1;
+					}
+				}
+				//合并Cuts_src.SRC_LimitArcSet_indicator[Cuts_src.processed_num + Cuts_src.added_num]到Cuts_src.SRC_LimitArcSet_indicator[j]
+				for (int k = 0; k < p.Depot_Num+p.Customer_Num; k++)
+				{
+					for (int s = 0; s < p.Depot_Num + p.Customer_Num; s++)
+					{
+						Cuts_src.SRC_LimitArcSet_indicator[j][k][s] = Cuts_src.SRC_LimitArcSet_indicator[Cuts_src.processed_num + Cuts_src.added_num][k][s];
+					}
+				}
+				Cuts_src.added_num = Cuts_src.added_num - 1;
+				break;
+			}
+		}
+		Cuts_src.added_num++;
+	}
+
+
 	return false;
 }
 
