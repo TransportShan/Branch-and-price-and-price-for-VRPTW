@@ -29,7 +29,7 @@ public:
 	void DeleteColumn_byCycle(BranchABound &BB, ColumnPool &colp, Problem &p);																								//根据RMP当前解的cycle信息，删除所有包含该cycle的列
 	void Update_flow(SolINFOR &SolInfo, ColumnPool &colp, Problem &p);																										//根据RMP当前解，更新每条弧上的流量
 	void Update_AugNgset(SolINFOR &SolInfo, ColumnPool &colp, Problem &p, SDC &Cuts_sdc);
-	int Get_SRC_Cof(int visitnum, int SRC_no, SRC &Cuts_src);
+	int Get_SRC_Cof(ColumnPool &colp,int ColIndex, SRC &Cuts_src, int SrcIndex);
 	//每个node上结束时调用
 	void reset_RmpMatrix_byclass(void);																																		//对Cpelx_object中参数使用end进行释放
 public:

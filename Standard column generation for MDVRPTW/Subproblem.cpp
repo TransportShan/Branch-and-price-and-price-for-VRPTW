@@ -2276,7 +2276,7 @@ bool Subproblem::Extend_Onestep(int direction, int currentCus, Path & curlabel, 
 				nextlabel.state_src[i] = nextlabel.state_src[i] + Cuts_src.add_state(Cuts_src.SRC_subset_len[i]);
 				if (nextlabel.state_src[i]>=1)
 				{
-					SRC_modifiedRC = -lp.SRC_dual[i];
+					SRC_modifiedRC = SRC_modifiedRC -lp.SRC_dual[i];
 					nextlabel.state_src[i] = nextlabel.state_src[i] - 1;
 				}
 			}
@@ -2430,7 +2430,7 @@ bool Subproblem::Extend_Onestep(int direction, int currentCus, Path & curlabel, 
 				nextlabel.state_src[i] = nextlabel.state_src[i] + Cuts_src.add_state(Cuts_src.SRC_subset_len[i]);
 				if (nextlabel.state_src[i]>=1)
 				{
-					SRC_modifiedRC = -lp.SRC_dual[i];
+					SRC_modifiedRC = SRC_modifiedRC -lp.SRC_dual[i];
 					nextlabel.state_src[i] = nextlabel.state_src[i] - 1;
 				}
 			}

@@ -29,10 +29,21 @@
 
 using namespace std;
 
+void Chech_Logic(void)
+{
+#if EXACTPSP == 1
+#if TCYCLE != 1
+	cout << "ERROR: EXACTPSP为1时，理论上的精确解要求TCYCLE设置为1" << endl;
+	cin.get();
+#endif
+#endif
+}
 
 
 int _tmain(int argc, _TCHAR* argv[])
 {
+	//逻辑检验
+	Chech_Logic();
 	//设置时间种子，无论是主函数还是其他函数体要使用随机数，只需要在main中设置一次种子
 	srand((unsigned)time(NULL));
 	//首先检验matlab的dll文件是否成功生成
@@ -54,8 +65,8 @@ int _tmain(int argc, _TCHAR* argv[])
 	string data_file_name;					//输入参数文件
 	string iniSolution_file_name;			//输入初始解的文件
 	start = clock();
-	data_file_name = "./pr_data./mdvrptw01.csv";
-	iniSolution_file_name = "./pr_data./ini_mdvrptw01.csv"; 
+	data_file_name = "./pr_data./mdvrptw02.csv";
+	iniSolution_file_name = "./pr_data./ini_mdvrptw02.csv"; 
 
 	//声明类
 	Problem VRP;
@@ -102,6 +113,9 @@ int _tmain(int argc, _TCHAR* argv[])
 #endif
 #if RCCUT == 1
 	Cuts_rcc.Ini_RCC(VRP);
+#endif
+#if SRCUT == 1
+	Cuts_src.Ini_SRC(VRP);
 #endif
 	//----------------------------------------------------------------------------------------------------------------------------------------------------------
 	//列池初始化结束

@@ -1464,6 +1464,11 @@ void Column_Generation::Extend_RCC_cut(float cur_load, float cur_RHS, int * cur_
 
 bool Column_Generation::Generate_SRC(SolINFOR & SolInfo, BranchABound & BB, Subproblem & subp, ColumnPool & colp, Problem & p, RMP & LP, SRC & Cuts_src)
 {
+	if (Cuts_src.processed_num >= Conf::MAX_SR_NUM)
+	{
+		return true;
+	}
+
 	float temp_vio = 0;
 	int temp_visit_num = 0;
 	int temp_RHS = 0;
@@ -1482,6 +1487,7 @@ bool Column_Generation::Generate_SRC(SolINFOR & SolInfo, BranchABound & BB, Subp
 				{
 					//检验当前基解
 					//得到系数
+					temp_vio = 0;
 					Cuts_src.temp_2D[Conf::MAX_SR_SET + 1] = 0;
 					for (int s = 0; s < SolInfo.Cur_solution.best_LBsol_num; s++)
 					{
@@ -1540,6 +1546,7 @@ bool Column_Generation::Generate_SRC(SolINFOR & SolInfo, BranchABound & BB, Subp
 						//以上都是限制|C|=4时，C中任意两点距离不大于MAX_SR_DISTANCE
 						//检验当前基解
 						//得到系数
+						temp_vio = 0;
 						Cuts_src.temp_2D[Conf::MAX_SR_SET + 1] = 0;
 						for (int s = 0; s < SolInfo.Cur_solution.best_LBsol_num; s++)
 						{
@@ -1607,6 +1614,7 @@ bool Column_Generation::Generate_SRC(SolINFOR & SolInfo, BranchABound & BB, Subp
 							//以上都是限制|C|=5时，C中任意两点距离不大于MAX_SR_DISTANCE
 							//检验当前基解
 							//得到系数
+							temp_vio = 0;
 							Cuts_src.temp_2D[Conf::MAX_SR_SET + 1] = 0;
 							for (int s = 0; s < SolInfo.Cur_solution.best_LBsol_num; s++)
 							{
@@ -1695,6 +1703,7 @@ bool Column_Generation::Generate_SRC(SolINFOR & SolInfo, BranchABound & BB, Subp
 					{
 						for (int m = 0; m < augment_Vertex_num; m++)
 						{
+							if (1== Cuts_src.SRC_LimitVertexSet_indicator[Cuts_src.processed_num + Cuts_src.added_num][augment_Vertex[m]]) continue;
 							Cuts_src.SRC_LimitVertexSet[Cuts_src.processed_num + Cuts_src.added_num][Cuts_src.SRC_LimitVertexSet_num[Cuts_src.processed_num + Cuts_src.added_num]] = augment_Vertex[m];
 							Cuts_src.SRC_LimitVertexSet_indicator[Cuts_src.processed_num + Cuts_src.added_num][augment_Vertex[m]] = 1;
 							Cuts_src.SRC_LimitVertexSet_num[Cuts_src.processed_num + Cuts_src.added_num]++;
@@ -1751,7 +1760,7 @@ bool Column_Generation::Generate_SRC(SolINFOR & SolInfo, BranchABound & BB, Subp
 			{
 				if (Cuts_src.SRC_LimitVertexSet[Cuts_src.processed_num + Cuts_src.added_num][j]== Cuts_src.SRC_subset[Cuts_src.processed_num + Cuts_src.added_num][k])continue;
 				Cuts_src.SRC_LimitArcSet_indicator[Cuts_src.processed_num + Cuts_src.added_num][Cuts_src.SRC_LimitVertexSet[Cuts_src.processed_num + Cuts_src.added_num][j]][Cuts_src.SRC_subset[Cuts_src.processed_num + Cuts_src.added_num][k]] = 1;
-				Cuts_src.SRC_LimitArcSet_indicator[Cuts_src.processed_num + Cuts_src.added_num][Cuts_src.SRC_LimitVertexSet[Cuts_src.processed_num + Cuts_src.added_num][k]][Cuts_src.SRC_subset[Cuts_src.processed_num + Cuts_src.added_num][j]] = 1;
+				Cuts_src.SRC_LimitArcSet_indicator[Cuts_src.processed_num + Cuts_src.added_num][Cuts_src.SRC_subset[Cuts_src.processed_num + Cuts_src.added_num][k]][Cuts_src.SRC_LimitVertexSet[Cuts_src.processed_num + Cuts_src.added_num][j]] = 1;
 			}
 		}
 #endif
@@ -1786,7 +1795,14 @@ bool Column_Generation::Generate_SRC(SolINFOR & SolInfo, BranchABound & BB, Subp
 		Cuts_src.added_num++;
 	}
 
-
-	return false;
+	if (Cuts_src.added_num >0)
+	{
+		Cuts_src.added_num = int(fmin(Cuts_src.added_num, Conf::MAX_SR_NUM - Cuts_src.processed_num));
+		return false;
+	}
+	else
+	{
+		return true;
+	}
 }
 

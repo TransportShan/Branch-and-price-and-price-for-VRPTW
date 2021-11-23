@@ -368,14 +368,7 @@ bool RMP::Bulid_RmpMatrix(SolINFOR &SolInfo, BranchABound &BB, ColumnPool &colp,
 		//每个SR-cuts
 		for (j = 0; j < Cuts_src.added_num; j++)
 		{
-			temp_factor = 0;
-			//一个SR-cuts内包含的每个点
-			for (k = 0; k < Cuts_src.SRC_subset_len[j]; k++)
-			{
-				//列colp.Col[column_index]到达SR-cuts包含的点Cuts_src.SRC_subset[j][k]的次数
-				temp_factor = temp_factor + colp.Col[column_index].Customer_indicator[Cuts_src.SRC_subset[j][k]];
-			}
-			temp_factor = Get_SRC_Cof(temp_factor,j, Cuts_src);
+			temp_factor = Get_SRC_Cof(colp, column_index, Cuts_src, j);
 			col += Rmp_ctall[Cuts_src.SRC_cons_index[j]](temp_factor);
 		}
 #endif
@@ -691,7 +684,7 @@ bool RMP::StandardRMP_SolvebyCPLEX_Real(SolINFOR &SolInfo, BranchABound &BB, Col
 				//列colp.Col[column_index]到达SR-cuts包含的点Cuts_src.SRC_subset[Cuts_src.processed_num+i][k]的次数
 				temp_factor = temp_factor + colp.Col[column_index].Customer_indicator[Cuts_src.SRC_subset[Cuts_src.processed_num + i][k]];
 			}
-			temp_factor = Get_SRC_Cof(temp_factor, Cuts_src.processed_num + i, Cuts_src);
+			temp_factor = floor(temp_factor*Cuts_src.add_state(Cuts_src.SRC_subset_len[Cuts_src.processed_num + i]));
 			c_SRC += Rmp_routevar_x[j] * temp_factor;
 		}
 		Rmp_ctall.add(IloRange(Rmp_matrix.env, 0, c_SRC, Cuts_src.SRC_RHS[Cuts_src.processed_num + i]));
@@ -795,14 +788,7 @@ bool RMP::StandardRMP_SolvebyCPLEX_Real(SolINFOR &SolInfo, BranchABound &BB, Col
 		//每个subset-row cuts
 		for (j = 0; j < Cuts_src.processed_num + Cuts_src.added_num; j++)
 		{
-			temp_factor = 0;
-			//一个SR-cuts内包含的每个点
-			for (k = 0; k < Cuts_src.SRC_subset_len[j]; k++)
-			{
-				//列colp.Col[column_index]到达SR-cuts包含的点Cuts_src.SRC_subset[j][k]的次数
-				temp_factor = temp_factor + colp.Col[column_index].Customer_indicator[Cuts_src.SRC_subset[j][k]];
-			}
-			temp_factor = Get_SRC_Cof(temp_factor, j, Cuts_src);
+			temp_factor = Get_SRC_Cof(colp, column_index, Cuts_src, j);
 			col += Rmp_ctall[Cuts_src.SRC_cons_index[j]](temp_factor);
 		}
 #endif
@@ -933,7 +919,7 @@ bool RMP::StandardRMP_SolvebyCPLEX_Real(SolINFOR &SolInfo, BranchABound &BB, Col
 #if SRCUT == 1
 		for (i = 0; i < Cuts_src.processed_num + Cuts_src.added_num; i++)
 		{
-			SDC_dual[i] = Rmp_cplex.getDual(Rmp_ctall[Cuts_src.SRC_cons_index[i]]);
+			SRC_dual[i] = Rmp_cplex.getDual(Rmp_ctall[Cuts_src.SRC_cons_index[i]]);
 		}
 		Cuts_src.processed_num = Cuts_src.processed_num + Cuts_src.added_num;
 		Cuts_src.added_num = 0;
@@ -1222,30 +1208,47 @@ void RMP::Update_AugNgset(SolINFOR & SolInfo, ColumnPool & colp, Problem & p, SD
 #endif
 }
 
-int RMP::Get_SRC_Cof(int visitnum, int SRC_no, SRC & Cuts_src)
+int RMP::Get_SRC_Cof(ColumnPool &colp, int ColIndex, SRC &Cuts_src, int SrcIndex)
 {
-	float multiplier = 0;
+	int temp_Cof = 0;
+	float temp_state = 0;
+	int temp_visit = 0;
 
-	if (3==Cuts_src.SRC_subset_len[SRC_no])
+	float multiper = Cuts_src.add_state(Cuts_src.SRC_subset_len[SrcIndex]);
+	int visit_sum = 0;
+	for (int i = 0; i < Cuts_src.SRC_subset_len[SrcIndex]; i++)
 	{
-		multiplier = Conf::SR_MULTIPY_3;
+		visit_sum = visit_sum + colp.Col[ColIndex].Customer_indicator[Cuts_src.SRC_subset[SrcIndex][i]];
 	}
-	else if(4 == Cuts_src.SRC_subset_len[SRC_no])
+	//首先，colp.Col[ColIndex]至少要经过floor(Cuts_src.add_state(Cuts_src.SRC_subset_len[SrcIndex])*Cuts_src.SRC_subset[SrcIndex])>=1个点
+	if (floor(multiper*visit_sum)>=1)
 	{
-		multiplier = Conf::SR_MULTIPY_4;
-	}
-	else if (5 == Cuts_src.SRC_subset_len[SRC_no])
-	{
-		multiplier = Conf::SR_MULTIPY_5;
-	}
-	else
-	{
-		cout << "ERROR：SRC不等式错误" << endl;
-		cin.get();
+		//其次，每连续经过floor(1/Cuts_src.add_state(Cuts_src.SRC_subset_len[SrcIndex])个*Cuts_src.SRC_subset[SrcIndex]中节点，则系数增加1
+		//这里的连续指每条弧都在Cuts_src.SRC_LimitArcSet_indicator[SrcIndex]中
+		for (int i = 0; i < colp.Col[ColIndex].nodesNum-1; i++)
+		{
+			if (0==Cuts_src.SRC_LimitArcSet_indicator[SrcIndex][colp.Col[ColIndex].nodes[i]][colp.Col[ColIndex].nodes[i+1]])
+			{
+				temp_state = 0;
+			}
+			if (1==Cuts_src.SRC_subset_indicator[SrcIndex][colp.Col[ColIndex].nodes[i + 1]])
+			{
+				temp_visit = temp_visit + 1;
+				temp_state = temp_state + multiper;
+				if (temp_state>=1)
+				{
+					temp_Cof= temp_Cof+1;
+					temp_state = temp_state - 1;
+				}
+				if (temp_visit>= visit_sum)
+				{
+					break;
+				}
+			}
+		}
 	}
 
-	int cof = floor(visitnum*multiplier);
-	return cof;
+	return temp_Cof;
 }
 
 void RMP::reset_RmpMatrix_byclass(void)

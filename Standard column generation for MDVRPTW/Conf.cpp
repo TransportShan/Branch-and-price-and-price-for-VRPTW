@@ -51,13 +51,13 @@ float Conf::heuristic_BOUND = 99999;
 int Conf::MAX_ADD_SDC = 10;
 
 int Conf::MAX_SR_SET = 5;
-float Conf::MAX_SR_DISTANCE = 20;
+float Conf::MAX_SR_DISTANCE = 100;
 float Conf::MIN_SR_THRESHOLD = 0.1;
-int Conf::MAX_ADD_SR = 40;
+int Conf::MAX_ADD_SR = 30;
 int Conf::MAX_SR_NUM = 200;
-float Conf::SR_MULTIPY_3 = 1/2;
-float Conf::SR_MULTIPY_4 = 2/3;
-float Conf::SR_MULTIPY_5 = 1/3;
+float Conf::SR_MULTIPY_3 = 0.5;
+float Conf::SR_MULTIPY_4 = 0.6666667;
+float Conf::SR_MULTIPY_5 = 0.3333333;
 
 int Conf::MAX_ROBUST_DEPTH = 2;
 
