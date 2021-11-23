@@ -6,7 +6,6 @@
 #include "RMP.h"
 #include "Subproblem.h"
 #include "OUTPUT.h"
-#include "RMP.h"
 #include "Solution.h"
 #include "ColumnPool.h"
 #include "Subproblem.h"
