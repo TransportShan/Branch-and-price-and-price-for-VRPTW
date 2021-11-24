@@ -50,11 +50,11 @@ float Conf::heuristic_BOUND = 99999;
 //与cut相关的
 int Conf::MAX_ADD_SDC = 10;
 
-int Conf::MAX_SR_SET = 5;
-float Conf::MAX_SR_DISTANCE = 100;
+int Conf::MAX_SR_SET = 4;
+float Conf::MAX_SR_DISTANCE = 200;
 float Conf::MIN_SR_THRESHOLD = 0.1;
 int Conf::MAX_ADD_SR = 30;
-int Conf::MAX_SR_NUM = 200;
+int Conf::MAX_SR_NUM = 150;
 float Conf::SR_MULTIPY_3 = 0.5;
 float Conf::SR_MULTIPY_4 = 0.6666667;
 float Conf::SR_MULTIPY_5 = 0.3333333;

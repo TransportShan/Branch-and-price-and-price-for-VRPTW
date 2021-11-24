@@ -429,7 +429,7 @@ void SRC::Insert_VioandRoute(int posi, float cur_violation)
 	violation.insert(violation.begin() + posi, cur_violation);
 	subset_route.insert(subset_route.begin() + posi, temp_2D);
 
-	if (violation_num<Conf::MAX_ADD_SR)
+	if (violation_num< fmin(Conf::MAX_ADD_SR, Conf::MAX_SR_NUM - processed_num))
 	{
 		violation_num = violation_num + 1;
 	}

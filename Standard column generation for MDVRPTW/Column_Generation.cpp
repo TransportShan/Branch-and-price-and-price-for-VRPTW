@@ -1473,7 +1473,7 @@ bool Column_Generation::Generate_SRC(SolINFOR & SolInfo, BranchABound & BB, Subp
 	int temp_visit_num = 0;
 	int temp_RHS = 0;
 	int insert_posi = 0;
-
+	Cuts_src.violation_num = 0;
 	//|C|=3ʱ
 	if (Conf::MAX_SR_SET>=3)
 	{
