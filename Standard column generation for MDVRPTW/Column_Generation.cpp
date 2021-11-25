@@ -319,7 +319,6 @@ void Column_Generation::SolveNode_ByCG(Utility & Results, SolINFOR &SolInfo, Bra
 	//----------------------------------------------------------------------------------------------------------------------------------------------------------
 	//主循环结束
 	//----------------------------------------------------------------------------------------------------------------------------------------------------------
-	
 #if UPBOUND == 1
 	if (false== lp_node.StandardRMP_SolvebyCPLEX_Int(SolInfo, BB, pool))
 	{
@@ -339,6 +338,9 @@ void Column_Generation::SolveNode_ByCG(Utility & Results, SolINFOR &SolInfo, Bra
 	//输出rootnode上的指标
 	if (0 == BB.cur_node)
 	{
+		//调试
+		Cuts_src.Test_Show_SRC(p);
+		//调试结束
 		Results.Show_RootNode_results();
 	}
 	Results.Reset_UTILITY();

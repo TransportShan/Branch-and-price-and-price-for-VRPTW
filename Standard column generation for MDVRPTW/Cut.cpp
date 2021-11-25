@@ -357,6 +357,8 @@ void SRC::Ini_SRC(Problem & p)
 	{
 		subset_route[i].resize(Conf::MAX_SR_SET + 100);
 	}
+
+	SRC_file_name = "./result./SRC_results.csv";
 }
 
 float SRC::add_state(int SRC_length)
@@ -453,4 +455,66 @@ bool SRC::Check_SameSubset(int S1, int S2)
 	}
 
 	return true;
+}
+
+int SRC::Test_Show_SRC(Problem &p)
+{
+	ofstream oFile;
+	int i, j;
+	int *customer_SRC_num;
+	customer_SRC_num = new int[p.Customer_Num];
+	for (i = 0; i < p.Customer_Num; i++)
+	{
+		customer_SRC_num[i] = 0;
+	}
+
+	oFile.open(SRC_file_name.c_str(), ios::out | ios::trunc);
+
+	if (!oFile.is_open())
+	{
+		cerr << "Can't open" << SRC_file_name << "for write.\n";
+		return 0;
+	}
+	else
+	{
+		//CPA框架下重新优化（添加一组SDC）的次数
+		oFile << "SRC的C集：" << endl;
+
+		for (i = 0; i<processed_num; i++)
+		{
+			for (j = 0; j<SRC_subset_len[i]; j++)
+			{
+				customer_SRC_num[SRC_subset[i][j]]++;
+				oFile << SRC_subset[i][j] << ',';
+			}	
+			oFile << endl;
+		}
+		
+
+		oFile << "SRC的M集：" << endl;
+
+		for (i = 0; i<processed_num; i++)
+		{
+			for (j = 0; j<SRC_LimitVertexSet_num[i]; j++)
+			{
+				oFile << SRC_LimitVertexSet[i][j] << ',';
+			}
+			oFile << endl;
+		}
+
+		oFile << "节点上SRC的数量：" << endl;
+		for (i = 0; i < p.Customer_Num; i++)
+		{
+			oFile << i << ',';
+		}
+		oFile << endl;
+		for (i = 0; i < p.Customer_Num; i++)
+		{
+			oFile << customer_SRC_num[i] << ',';
+		}
+
+		delete customer_SRC_num;
+		oFile.close();
+		return 1;
+	}
 }

@@ -101,6 +101,7 @@ public:
 	int Get_insert_no(float cur_violation);																				//获取violation中的插入位置
 	void Insert_VioandRoute(int posi,float cur_violation);																//将cur_violation和temp_2D分别插入violation和subset_route的第posi个位置
 	bool Check_SameSubset(int S1, int S2);																				//如果SRC_subset[S1]与SRC_subset[S1]相同则返回true，否则返回false
+	int Test_Show_SRC(Problem &p);																							//调试用函数
 public:
 	//记录已经生成的SRC
 	int **SRC_subset;						//记录每个SRC有效不等式中节点集合C，大小为[Conf::MAX_SR_NUM]*[Conf::MAX_SR_SET]
@@ -124,6 +125,9 @@ public:
 											//第0列为subset个数;第1-Conf::MAX_SR_SET列为subset的节点序号;第Conf::MAX_SR_SET+1列为该集合C所在路径的个数;第Conf::MAX_SR_SET+2-Conf::MAX_SR_SET+99为基解中路径的序号
 	vector<int> temp_2D;					//向subset_route插入一行的过程中，临时存储，这里开辟是为了减少函数中反复动态开辟，大小为[Conf::MAX_SR_SET+100]
 	int violation_num;						//分离过程中，找到的SRC数量
+
+	//调试用
+	string SRC_file_name;
 };
 
 
